@@ -12,7 +12,6 @@ class VolController extends Controller
      */
     public function index()
     {
-        // Retourne tous les vols avec les relations des aéroports associés
         return Vol::with(['aeroportDepart', 'aeroportArrivee'])->get();
     }
 
@@ -22,19 +21,19 @@ class VolController extends Controller
     public function store(Request $request)
     {
         try {
-            // Validation des données d'entrée
             $validated = $request->validate([
                 'NumeroVol' => 'required|string|max:50',
                 'HeureDepart' => 'required|date',
                 'HeureArrivee' => 'required|date|after:HeureDepart',
                 'Statut' => 'required|string|max:50',
                 'Porte' => 'required|string|max:10',
+                'prix' => 'nullable|numeric|min:0',
                 'TypeAvion' => 'required|string|max:50',
                 'IdAeroportDepart' => 'required|exists:aeroports,id',
                 'IdAeroportArrivee' => 'required|exists:aeroports,id',
             ]);
 
-            // Création du vol avec les données validées
+
             $vol = Vol::create([
                 'numero_vol' => $validated['NumeroVol'],
                 'heure_depart' => $validated['HeureDepart'],
@@ -42,12 +41,13 @@ class VolController extends Controller
                 'statut' => $validated['Statut'],
                 'porte' => $validated['Porte'],
                 'type_avion' => $validated['TypeAvion'],
+                'prix' => $validated['prix'],
+
                 'id_aeroport_depart' => $validated['IdAeroportDepart'],
                 'id_aeroport_arrivee' => $validated['IdAeroportArrivee'],
             ]);
 
-            return response()->json($vol, 201); // Retourne le vol créé avec un code 201
-
+            return response()->json($vol, 201);
         } catch (\Exception $e) {
             return response()->json("Insertion impossible : {$e->getMessage()}", 400);
         }
@@ -58,7 +58,6 @@ class VolController extends Controller
      */
     public function show($id)
     {
-        // Retourne un vol spécifique avec ses relations
         return Vol::with(['aeroportDepart', 'aeroportArrivee'])->findOrFail($id);
     }
 
@@ -70,7 +69,6 @@ class VolController extends Controller
         try {
             $vol = Vol::findOrFail($id);
 
-            // Validation des données d'entrée
             $validated = $request->validate([
                 'NumeroVol' => 'string|max:50',
                 'HeureDepart' => 'date',
@@ -79,10 +77,10 @@ class VolController extends Controller
                 'Porte' => 'string|max:10',
                 'TypeAvion' => 'string|max:50',
                 'IdAeroportDepart' => 'exists:aeroports,id',
+                'prix' => 'nullable|numeric|min:0',
                 'IdAeroportArrivee' => 'exists:aeroports,id',
             ]);
 
-            // Mise à jour des champs validés
             $vol->update([
                 'numero_vol' => $validated['NumeroVol'] ?? $vol->numero_vol,
                 'heure_depart' => $validated['HeureDepart'] ?? $vol->heure_depart,
@@ -91,6 +89,8 @@ class VolController extends Controller
                 'porte' => $validated['Porte'] ?? $vol->porte,
                 'type_avion' => $validated['TypeAvion'] ?? $vol->type_avion,
                 'id_aeroport_depart' => $validated['IdAeroportDepart'] ?? $vol->id_aeroport_depart,
+
+                'prix' => $validated['prix'] ?? $vol->prix,
                 'id_aeroport_arrivee' => $validated['IdAeroportArrivee'] ?? $vol->id_aeroport_arrivee,
             ]);
 
@@ -109,9 +109,44 @@ class VolController extends Controller
             $vol = Vol::findOrFail($id);
             $vol->delete();
 
-            return response()->noContent(); // Retourne un code 204 pour une suppression réussie
+            return response()->noContent();
         } catch (\Exception $e) {
             return response()->json("Suppression impossible : {$e->getMessage()}", 400);
         }
+    }
+
+    public function pagivate_search(Request $request)
+    {
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $departureCity = $request->input('departure');
+        $destinationCity = $request->input('destination');
+
+        $volsQuery = Vol::with(['aeroportDepart', 'aeroportArrivee']);
+
+        if ($startDate) {
+            $startDate = \Carbon\Carbon::createFromFormat('d/m/Y', $startDate)->startOfDay();
+            $volsQuery->where('heure_depart', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $endDate = \Carbon\Carbon::createFromFormat('d/m/Y', $endDate)->endOfDay();
+            $volsQuery->where('heure_arrivee', '<=', $endDate);
+        }
+
+        if ($departureCity) {
+            $volsQuery->whereHas('aeroportDepart', function ($query) use ($departureCity) {
+                $query->where('ville_aeroport', 'like', '%' . $departureCity . '%');
+            });
+        }
+
+        if ($destinationCity) {
+            $volsQuery->whereHas('aeroportArrivee', function ($query) use ($destinationCity) {
+                $query->where('ville_aeroport', 'like', '%' . $destinationCity . '%');
+            });
+        }
+        $vols = $volsQuery->paginate(10);
+
+        return response()->json($vols);
     }
 }

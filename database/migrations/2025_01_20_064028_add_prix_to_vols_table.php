@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('aeroports', function (Blueprint $table) {
-            $table->id();
-            $table->string('nom_aeroport', 50);
-            $table->string('ville_aeroport');
-            $table->string('pays_aeroport');
-            $table->timestamps();
+        Schema::table('vols', function (Blueprint $table) {
+            $table->decimal('prix', 8, 2)->after('type_avion')->nullable(); // Ajouter la colonne prix
         });
     }
 
@@ -25,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('aeroports');
+        Schema::table('vols', function (Blueprint $table) {
+            //
+        });
     }
 };

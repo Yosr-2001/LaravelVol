@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_passager')->constrained('passagers');
-            $table->foreignId('id_vol')->constrained('vols');
+            $table->foreignId('id_passager')->constrained('passagers')->onDelete('restrict');
+            $table->foreignId('id_vol')->constrained('vols')->onDelete('restrict');
             $table->dateTime('date_reservation');
             $table->string('statut_reservation');
             $table->decimal('prix_reservation', 8, 2);

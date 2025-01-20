@@ -15,6 +15,7 @@ class vol extends Model
         'statut',
         'porte',
         'type_avion',
+        'prix',
         'id_aeroport_depart',
         'id_aeroport_arrivee',
     ];

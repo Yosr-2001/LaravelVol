@@ -95,4 +95,18 @@ class ReservationController extends Controller
             return response()->json(["message" => "Suppression impossible : {$e->getMessage()}"], 400);
         }
     }
+    public function getHistoriqueReservationsByEmail($email)
+    {
+        $reservations = Reservation::whereHas('passager', function ($query) use ($email) {
+            $query->where('email_passager', $email);
+        })
+            ->with(['vol', 'vol.aeroportDepart', 'vol.aeroportArrivee'])
+            ->get();
+
+        if ($reservations->isEmpty()) {
+            return response()->json(['message' => 'Aucune réservation trouvée pour cet email.'], 404);
+        }
+
+        return response()->json($reservations, 200);
+    }
 }

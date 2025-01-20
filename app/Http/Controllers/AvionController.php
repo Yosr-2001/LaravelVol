@@ -56,15 +56,15 @@ class AvionController extends Controller
             $avion = Avion::findOrFail($id);
 
             $validated = $request->validate([
-                'TypeAvion' => 'nullable|string|max:255',
-                'CapaciteAvion' => 'nullable|integer|min:1',
-                'FabriquantAvion' => 'nullable|string|max:255',
+                'type_avion' => 'nullable|string|max:255',
+                'capacite_avion' => 'nullable|integer|min:1',
+                'fabriquant_avion' => 'nullable|string|max:255',
             ]);
 
             $avion->update([
-                'type_avion' => $validated['TypeAvion'] ?? $avion->type_avion,
-                'capacite_avion' => $validated['CapaciteAvion'] ?? $avion->capacite_avion,
-                'fabriquant_avion' => $validated['FabriquantAvion'] ?? $avion->fabriquant_avion,
+                'type_avion' => $validated['type_avion'] ?? $avion->type_avion,
+                'capacite_avion' => $validated['capacite_avion'] ?? $avion->capacite_avion,
+                'fabriquant_avion' => $validated['fabriquant_avion'] ?? $avion->fabriquant_avion,
             ]);
 
             return response()->json($avion, 200);

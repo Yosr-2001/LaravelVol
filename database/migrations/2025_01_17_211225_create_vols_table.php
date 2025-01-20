@@ -19,8 +19,19 @@ return new class extends Migration
             $table->string('statut')->nullable();
             $table->string('porte')->nullable();
             $table->string('type_avion')->nullable();
-            $table->foreignId('id_aeroport_depart')->constrained('aeroports');
-            $table->foreignId('id_aeroport_arrivee')->constrained('aeroports');
+            $table->unsignedBigInteger('id_aeroport_depart');
+            $table->unsignedBigInteger('id_aeroport_arrivee');
+
+            $table->foreign('id_aeroport_depart')
+                ->references('id')
+                ->on('aeroports')
+                ->onDelete('restrict');
+
+            $table->foreign('id_aeroport_arrivee')
+                ->references('id')
+                ->on('aeroports')
+                ->onDelete('restrict');
+
             $table->timestamps();
         });
     }
